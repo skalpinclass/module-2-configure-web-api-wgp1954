@@ -7,6 +7,8 @@ using Swashbuckle.AspNetCore.Swagger;
 using System;
 using System.IO;
 using System.Reflection;
+using Blog.WebApi.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Blog.WebApi
 {
@@ -22,7 +24,13 @@ namespace Blog.WebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
+                //to allow serialization from db entities without dto passthrough
+                .AddJsonOptions(options =>
+                {
+                    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+                });
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new Info { Title = "My API", Version = "v1" });
@@ -30,6 +38,8 @@ namespace Blog.WebApi
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 c.IncludeXmlComments(xmlPath);
             });
+            services.AddDbContext<BlogContext>(opts =>
+                opts.UseSqlServer(Configuration.GetConnectionString("BloggingDbase")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
